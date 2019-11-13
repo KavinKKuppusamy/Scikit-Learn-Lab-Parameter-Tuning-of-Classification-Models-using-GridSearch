@@ -1,0 +1,484 @@
+##################################################################################################
+#	Step I: We are going to work with the digits dataset that comes with Scikit
+#	More details are at the link below:
+#	http://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_digits.html
+##################################################################################################
+
+########################################################################
+#	Loading and inspecting the dataset
+########################################################################
+
+from sklearn.datasets import load_digits
+digits = load_digits()
+print(digits.data.shape)
+print(digits.DESCR)
+
+########################################################################
+# 	Visualization of data
+########################################################################
+# just the first
+%matplotlib inline  
+import matplotlib.pyplot as plt 
+plt.gray() 
+plt.matshow(digits.images[0]) 
+plt.show() 
+
+# top 5
+import numpy as np 
+plt.figure(figsize=(20,4))
+for index, (image, label) in enumerate(zip(digits.data[0:5], digits.target[0:5])):
+    plt.subplot(1, 5, index + 1)
+    plt.imshow(np.reshape(image, (8,8)), cmap=plt.cm.gray)
+    plt.title('Training: %i\n' % label, fontsize = 20)
+	
+
+########################################################################
+#	Splitting data into train/test
+########################################################################
+from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(digits.data, digits.target, test_size=0.25, random_state=0)
+
+
+########################################################################
+#	Model creation
+########################################################################
+
+from sklearn.linear_model import LogisticRegression
+# using all defaults - you should change parameters
+logisticRegr = LogisticRegression()
+logisticRegr.fit(x_train, y_train)
+predictions = logisticRegr.predict(x_test)
+
+########################################################################
+#	Model evaluation
+########################################################################
+
+score = logisticRegr.score(x_test, y_test)
+print(score)
+
+########################################################################
+#	Confusion matrix
+########################################################################
+
+import matplotlib.pyplot as plt
+from sklearn import metrics
+cm = metrics.confusion_matrix(y_test, predictions)
+print(cm)
+
+########################################################################
+#	Fancier confusion matrix
+########################################################################
+
+import seaborn as sns
+plt.figure(figsize=(9,9))
+sns.heatmap(cm, annot=True, fmt=".3f", linewidths=.5, square = True, cmap = 'Blues_r');
+plt.ylabel('Actual label');
+plt.xlabel('Predicted label');
+all_sample_title = 'Accuracy Score: {0}'.format(score)
+plt.title(all_sample_title, size = 15);
+
+########################################################################
+#	Evaluation metrics
+########################################################################
+
+from sklearn import metrics
+print(metrics.classification_report(y_test, predictions))
+
+
+########################################################################
+#	Let's try some other models. Remember to play with parameters
+########################################################################
+
+########################################################################
+#	SVM
+########################################################################
+
+from sklearn.svm import SVC
+clf = SVC()
+clf.fit(x_train, y_train)
+predictions = clf.predict(x_test)
+
+########################################################################
+#	Gaussian Naive Bayes
+########################################################################
+
+from sklearn.naive_bayes import GaussianNB
+gnb = GaussianNB()
+gnb.fit(x_train, y_train)
+predictions = gnb.predict(x_test)
+
+########################################################################
+#	k-NN
+########################################################################
+
+from sklearn.neighbors import KNeighborsClassifier
+knn = KNeighborsClassifier()
+knn.fit(x_train, y_train)
+predictions = knn.predict(x_test)
+
+########################################################################
+#	Decision Tree
+########################################################################
+
+from sklearn.tree import DecisionTreeClassifier
+dt = DecisionTreeClassifier()
+dt.fit(x_train, y_train)
+predictions = dt.predict(x_test)
+
+########################################################################
+#	Neural Net
+########################################################################
+
+from sklearn.neural_network import MLPClassifier
+mlp = MLPClassifier()
+mlp.fit(x_train, y_train)
+predictions = mlp.predict(x_test)
+
+
+
+##################################################################################################
+#	Step II: We are going to work with a synthetic binary classification
+#	datasets. Scikit learn has a very nice option for this in the classes below:
+#	sklearn.datasets. {make_classification, make_moons, make_circles}
+#	More details at the link below:
+#	http://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_classification.html
+##################################################################################################
+
+print(__doc__)
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import make_moons, make_circles, make_classification
+from sklearn.neural_network import MLPClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.gaussian_process.kernels import RBF
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.metrics import classification_report
+%matplotlib inline  
+
+##################################################################################################
+#	Create a fictional dataset, using the make_classification function and then add some noise
+##################################################################################################
+
+X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
+                           random_state=1, n_clusters_per_class=1)
+
+rng = np.random.RandomState(2)
+X += 2 * rng.uniform(size=X.shape)
+linearly_separable = (X, y)
+
+##################################################################################################
+#	Create a couple more fictional datasets, using the make_moons and make_circles functions
+#	and let's plot them
+##################################################################################################
+
+datasets = [make_moons(noise=0.3, random_state=0),
+            make_circles(noise=0.2, factor=0.5, random_state=1),
+            linearly_separable
+            ]
+dataset_names = ["Moons Dataset", "Circles Dataset", "Linearly Separable With Noise"]
+h = .02  # step size in the mesh
+figure = plt.figure(figsize=(20, 6))
+i = 1
+
+# iterate over datasets
+for ds_cnt, ds in enumerate(datasets):
+    # preprocess dataset, split into training and test part
+    X, y = ds
+    X = StandardScaler().fit_transform(X)
+    x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
+    y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                         np.arange(y_min, y_max, h))
+
+    # just plot the dataset first
+    cm = plt.cm.RdBu
+    cm_bright = ListedColormap(['#FF0000', '#0000FF'])
+    ax = plt.subplot(1, len(datasets), i)
+    ax.set_title(dataset_names[i-1])
+    # Plot the training points
+    ax.scatter(X[:, 0], X[:, 1], c=y, cmap=cm_bright,
+               edgecolors='k')
+    ax.set_xlim(xx.min(), xx.max())
+    ax.set_ylim(yy.min(), yy.max())
+    ax.set_xticks(())
+    ax.set_yticks(())
+    i += 1
+	
+plt.tight_layout()
+plt.show()
+
+##################################################################################################
+#	Model Creation: Let's divide the data into training and testing parts and use the training
+#	part to create different models
+##################################################################################################
+
+
+names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", 
+         "Decision Tree", "Neural Net", 
+         "Naive Bayes"]
+
+classifiers = [
+    KNeighborsClassifier(),
+    SVC(kernel="linear"),
+    SVC(gamma=2),
+    DecisionTreeClassifier(),
+    MLPClassifier(),
+    GaussianNB()]
+	
+figure = plt.figure(figsize=(27, 9))
+i = 1
+# iterate over datasets
+for ds_cnt, ds in enumerate(datasets):
+    # preprocess dataset, split into training and test part
+    X, y = ds
+    X = StandardScaler().fit_transform(X)
+    X_train, X_test, y_train, y_test = \
+        train_test_split(X, y, test_size=.4, random_state=42)
+
+    x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
+    y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                         np.arange(y_min, y_max, h))
+
+    # just plot the dataset first
+    cm = plt.cm.RdBu
+    cm_bright = ListedColormap(['#FF0000', '#0000FF'])
+    ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
+    if ds_cnt == 0:
+        ax.set_title("Input data")
+    # Plot the training points
+    ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+               edgecolors='k')
+    # and testing points
+    ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright, alpha=0.6,
+               edgecolors='k')
+    ax.set_xlim(xx.min(), xx.max())
+    ax.set_ylim(yy.min(), yy.max())
+    ax.set_xticks(())
+    ax.set_yticks(())
+    i += 1
+
+    # iterate over classifiers
+    for name, clf in zip(names, classifiers):
+        ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
+        clf.fit(X_train, y_train)
+        score = clf.score(X_test, y_test)
+        print("Performance of "+ str(name) + " on  " + str(dataset_names[ds_cnt]))
+        print("Accuracy = " + str(score))
+        print("Summary of performance:")
+        print(classification_report(clf.predict(X_test), y_test))
+        # Plot the decision boundary. For that, we will assign a color to each
+        # point in the mesh [x_min, x_max]x[y_min, y_max].
+        if hasattr(clf, "decision_function"):
+            Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+        else:
+            Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
+
+        # Put the result into a color plot
+        Z = Z.reshape(xx.shape)
+        ax.contourf(xx, yy, Z, cmap=cm, alpha=.8)
+
+        # Plot also the training points
+        ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+                   edgecolors='k')
+        # and testing points
+        ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright,
+                   edgecolors='k', alpha=0.6)
+
+        ax.set_xlim(xx.min(), xx.max())
+        ax.set_ylim(yy.min(), yy.max())
+        ax.set_xticks(())
+        ax.set_yticks(())
+        if ds_cnt == 0:
+            ax.set_title(name)
+        ax.text(xx.max() - .3, yy.min() + .3, ('%.2f' % score).lstrip('0'),
+                size=15, horizontalalignment='right')
+        i += 1
+
+plt.tight_layout()
+plt.show()
+
+
+##################################################################################################
+#	Step III: Performing cross-validation
+#	It's easy to perform cross-validation. Instead of the train_test_split function, use
+#	cross_val_score. Note that you will get as many outputs as number of folds
+#	http://scikit-learn.org/stable/modules/cross_validation.html#computing-cross-validated-metrics
+##################################################################################################
+
+from sklearn.model_selection import cross_val_score
+from sklearn.svm import SVC
+from sklearn import datasets
+
+iris = datasets.load_iris()
+clf = SVC(kernel='linear', C=1)
+scores = cross_val_score(clf, iris.data, iris.target, cv=5)
+scores  
+print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
+##################################################################################################
+#	There's an even better option. In a CV sample, we would like to have an equal mixture of class
+#	instances. There's a choice for this, called stratified k-fold
+#	http://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html#sklearn.model_selection.StratifiedKFold
+##################################################################################################
+
+print(__doc__)
+
+import numpy as np
+from scipy import interp
+import matplotlib.pyplot as plt
+from itertools import cycle
+
+from sklearn import svm, datasets
+from sklearn.metrics import roc_curve, auc
+from sklearn.model_selection import StratifiedKFold
+
+# #############################################################################
+# Data IO and generation
+
+# Import some data to play with
+iris = datasets.load_iris()
+X = iris.data
+y = iris.target
+X, y = X[y != 2], y[y != 2]
+n_samples, n_features = X.shape
+
+# Add noisy features
+random_state = np.random.RandomState(0)
+X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
+
+# #############################################################################
+# Classification and ROC analysis
+
+# Run classifier with cross-validation and plot ROC curves
+cv = StratifiedKFold(n_splits=6)
+classifier = svm.SVC(kernel='linear', probability=True,
+                     random_state=random_state)
+
+tprs = []
+aucs = []
+mean_fpr = np.linspace(0, 1, 100)
+
+i = 0
+for train, test in cv.split(X, y):
+    probas_ = classifier.fit(X[train], y[train]).predict_proba(X[test])
+    # Compute ROC curve and area the curve
+    fpr, tpr, thresholds = roc_curve(y[test], probas_[:, 1])
+    tprs.append(interp(mean_fpr, fpr, tpr))
+    tprs[-1][0] = 0.0
+    roc_auc = auc(fpr, tpr)
+    aucs.append(roc_auc)
+    plt.plot(fpr, tpr, lw=1, alpha=0.3,
+             label='ROC fold %d (AUC = %0.2f)' % (i, roc_auc))
+
+    i += 1
+plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
+         label='Luck', alpha=.8)
+
+mean_tpr = np.mean(tprs, axis=0)
+mean_tpr[-1] = 1.0
+mean_auc = auc(mean_fpr, mean_tpr)
+std_auc = np.std(aucs)
+plt.plot(mean_fpr, mean_tpr, color='b',
+         label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
+         lw=2, alpha=.8)
+
+std_tpr = np.std(tprs, axis=0)
+tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
+tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
+plt.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
+                 label=r'$\pm$ 1 std. dev.')
+
+plt.xlim([-0.05, 1.05])
+plt.ylim([-0.05, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver operating characteristic example')
+plt.legend(loc="lower right")
+plt.show()
+
+##################################################################################################
+#	Step IV: Automatic parameter tuning using grid search
+#	The most tedious part of ML is parameter tuning. Grid seach helps automate this
+#	See details: 
+#	http://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html
+##################################################################################################
+
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import classification_report
+from sklearn.svm import SVC
+
+print(__doc__)
+
+# Loading the Digits dataset
+digits = datasets.load_digits()
+
+# To apply an classifier on this data, we need to flatten the image, to
+# turn the data in a (samples, feature) matrix:
+n_samples = len(digits.images)
+X = digits.images.reshape((n_samples, -1))
+y = digits.target
+
+# Split the dataset in two equal parts
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.5, random_state=0)
+
+# Set the parameters by cross-validation
+tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
+                     'C': [1, 10, 100, 1000]},
+                    {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
+
+scores = ['precision', 'recall']
+
+for score in scores:
+    print("# Tuning hyper-parameters for %s" % score)
+    print()
+
+    clf = GridSearchCV(SVC(), tuned_parameters, cv=5,
+                       scoring='%s_macro' % score)
+    clf.fit(X_train, y_train)
+
+    print("Best parameters set found on development set:")
+    print()
+    print(clf.best_params_)
+    print()
+    print("Grid scores on development set:")
+    print()
+    means = clf.cv_results_['mean_test_score']
+    stds = clf.cv_results_['std_test_score']
+    for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+        print("%0.3f (+/-%0.03f) for %r"
+              % (mean, std * 2, params))
+    print()
+
+    print("Detailed classification report:")
+    print()
+    print("The model is trained on the full development set.")
+    print("The scores are computed on the full evaluation set.")
+    print()
+    y_true, y_pred = y_test, clf.predict(X_test)
+    print(classification_report(y_true, y_pred))
+    print()
+
+# Note the problem is too easy: the hyperparameter plateau is too flat and the
+# output model is the same for precision and recall with ties in quality.
+
+##################################################################################################
+#	Some more examples:
+#	1. http://scikit-learn.org/stable/auto_examples/model_selection/grid_search_text_feature_extraction.html#sphx-glr-auto-examples-model-selection-grid-search-text-feature-extraction-py
+#	2. http://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py
+##################################################################################################
+
+
+                            
